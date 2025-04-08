@@ -1,108 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timeline Explorer</title>
-
-    <!-- jQuery and Popper.js (Bootstrap requires these) -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-        
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
-
-    <style>
-        html {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow-y: auto;
-        }
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            overflow-y: auto;
-        }
-        .toolbar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 18%;
-            height: 100%;
-            background-color: white;
-            opacity: 0.8;
-            z-index: 999;
-            overflow-y: auto;
-            padding: 10px;
-        }
-        .toolbar:hover { opacity: 1; }
-        .stats {
-            position: absolute;
-            left: 18%;
-            top: 0;
-            width: 82%;
-            height: 95%;
-            z-index: 0;
-            margin-top: 5%;
-            margin-bottom: 5%;
-        }
-        .map {
-            position: absolute;
-            left: 18%;
-            top: 0;
-            width: 82%;
-            height: 100%;
-            z-index: 0;
-        }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>    
+<body>
     <div class="toolbar d-flex flex-column p-3">
-        <h2>🌎 Timeline Explorer</h2>
+        <h2 style="font-family: 'Arial', sans-serif;">🌎 Timeline Explorer</h2>
         <small class="text-muted ms-1">
             <a href="https://github.com/mg-diego" target="_blank" class="text-decoration-none d-inline-flex align-items-center">
               <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" width="16" height="16" class="me-1" />
               github.com/mg-diego
             </a>
         </small>
-        <small class="text-muted ms-1">
-            ℹ️ v1.0
-        </small>
-
+        <small class="text-muted ms-1">v1.0</small>
         <br>
-
         <div class="d-flex gap-2 mb-3">
             <button id="btnImport" class="btn btn-primary btn-sm">Import Data</button>
             <button id="btnClearData" class="btn btn-secondary btn-sm" disabled>Clear Data</button>
         </div>
-
-        <br>
-
+        <div class="mb-3">
+            <small for="customRange" class="form-label">ℹ️ Confidence: <span id="rangeValue">80</span></small>
+            <input data-bs-toggle="tooltip" data-bs-html="true" title="The confidence value in Google Takeout’s Location History / Timeline JSON files represents how confident Google is that a certain location data point is accurate<br><br> • 100 = Very confident the location is accurate <br><br>• <80 = likely imprecise or noisy location (e.g., based on weak GPS or Wi-Fi signal)" type="range" class="form-range" min="0" max="100" id="customRange" value="80">
+            </div>
         <input type="file" id="fileInput" style="display: none" multiple webkitdirectory />
         <ul class="nav nav-tabs mb-3" id="sidebarTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="tab-map-tab" data-bs-toggle="tab" data-bs-target="#tab-map" type="button" role="tab">
-                    🗺️ Map
-                </button>
+                <button class="nav-link active" id="tab-map-tab" data-bs-toggle="tab" data-bs-target="#tab-map" type="button" role="tab">🗺️ Map</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-travel-tab" data-bs-toggle="tab" data-bs-target="#tab-activities" type="button" role="tab">
-                    ✨ Activity
-                </button>
+                <button class="nav-link" id="tab-travel-tab" data-bs-toggle="tab" data-bs-target="#tab-activities" type="button" role="tab">✨ Activity</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-stats-tab" data-bs-toggle="tab" data-bs-target="#tab-stats" type="button" role="tab">
-                    📊 Stats
-                </button>
+                <button class="nav-link" id="tab-stats-tab" data-bs-toggle="tab" data-bs-target="#tab-stats" type="button" role="tab">📊 Stats</button>
             </li>
         </ul>
         <div class="tab-content flex-grow-1 text-bg-light p-3" id="sidebarTabContent" style="overflow-y: auto;">
-            <div class="tab-pane fade show active " id="tab-map" role="tabpanel">
+            <div class="tab-pane fade show active" id="tab-map" role="tabpanel">
+                <p>Import data to see the Locations.</p>
                 <div id="legend" class="d-flex flex-column gap-1">
-                    <h5><strong>Years:</strong></h5>
+                    <h5 id='years-label' style="display: none;"><strong>Years:</strong></h5>
                 </div>
             </div>
             <div class="tab-pane fade" id="tab-activities" role="tabpanel">
@@ -115,357 +57,27 @@
     </div>
 
     <div id="map" class="map" style="display: block;"></div>
-
     <div id="activities" class="activities" style="display: none;">
         <div class="container">
             <div class="row row-cols-1 row-cols-md-3 g-3" id="activitiesCardGrid"></div>
         </div>
     </div>
-
     <div id="stats" class="stats" style="display: none;">
         <div class="container">
-            <div class="row row-cols-1 row-cols-md-5 g-5" id="statsCardGrid"></div>
+            <div class="row row-cols-1 row-cols-md-1 g-1" style="margin-bottom:30px" id="globalStatsCardGrid"></div>
+            <div class="row row-cols-1 row-cols-md-5 g-5" style="margin-bottom:30px" id="statsCardGrid"></div>
         </div>
     </div>
 
-    <script>
-        const map = new maplibregl.Map({
-            container: 'map',
-            style: {
-                version: 8,
-                sources: {
-                    osm: {
-                        type: 'raster',
-                        tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                        tileSize: 256,
-                        attribution: '&copy; OpenStreetMap contributors'
-                    }
-                },
-                layers: [{
-                    id: 'osm',
-                    type: 'raster',
-                    source: 'osm'
-                }]
-            },
-            center: [0, 20],
-            zoom: 2
-        });
-
-        const tabs = document.querySelectorAll('.nav-link');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function (e) {
-                const target = e.target.getAttribute('data-bs-target');
-
-                // Hide map when Stats tab is selected
-                if (target === '#tab-stats') {
-                    document.getElementById('map').style.display = 'none';
-                    document.getElementById('activities').style.display = 'none';
-                    document.getElementById('stats').style.display = 'block';
-                } else if (target === '#tab-map') {
-                    document.getElementById('map').style.display = 'block';
-                    document.getElementById('activities').style.display = 'none';
-                    document.getElementById('stats').style.display = 'none';
-                } else if (target === '#tab-activities') {
-                    document.getElementById('map').style.display = 'none';
-                    document.getElementById('activities').style.display = 'block';
-                    document.getElementById('stats').style.display = 'none';
-                }
-            });
-        });
-
-
-        let yearColorMap = {};
-        let yearMarkersMap = {};
-        const availableColors = ["#FFD700", "#FE5000", "#CE0058", "#0085CA", "#00AB84", "#FCAEBB", "#44D62C", "#84754E", "#E0457B", "#768692"];
-
-        function getRandomColor() {
-            if (availableColors.length === 0) return "grey";
-            const i = Math.floor(Math.random() * availableColors.length);
-            return availableColors.splice(i, 1)[0];
-        }
-
-        function formatTimestamp(ts) {
-            const date = new Date(ts);
-            return `${date.getDate().toString().padStart(2, '0')}-` +
-                   `${(date.getMonth()+1).toString().padStart(2, '0')}-` +
-                   `${date.getFullYear()} ` +
-                   `${date.getHours().toString().padStart(2, '0')}:` +
-                   `${date.getMinutes().toString().padStart(2, '0')}:` +
-                   `${date.getSeconds().toString().padStart(2, '0')}h`;
-        }
-
-        function haversineDistanceE7(coordinates, lat1e7, lon1e7, lat2e7, lon2e7) {
-            const toRadians = degrees => degrees * (Math.PI / 180);
-
-            // Convert E7 to decimal degrees
-            const lat1 = coordinates[0][0]
-            const lon1 = coordinates[0][1]
-            const lat2 = coordinates[1][0]
-            const lon2 = coordinates[1][1]
-
-            const R = 6371000; // Earth's radius in meters
-            const dLat = toRadians(lat2 - lat1);
-            const dLon = toRadians(lon2 - lon1);
-
-            const a = Math.sin(dLat / 2) ** 2 +
-                    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-                    Math.sin(dLon / 2) ** 2;
-
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-            return R * c; // Distance in meters
-        }
-
-        function formatDistanceValue(distance) {
-            return distance === undefined
-                ? 0
-                : (distance / 1000).toFixed(2);
-        }
-
-        function convertToGeoJSON(timelineData) {
-            const features = [];
-
-            timelineData.timelineObjects.forEach((obj) => {
-                if (obj.placeVisit) {
-                    const loc = obj.placeVisit.location;
-                    features.push({
-                        type: "Feature",
-                        geometry: {
-                            type: "Point",
-                            coordinates: [loc.longitudeE7 / 1e7, loc.latitudeE7 / 1e7]
-                        },
-                        properties: {
-                            type: "placeVisit",
-                            name: loc.name || "Unknown",
-                            address: loc.address || "",
-                            placeId: loc.placeId || null,
-                            timestampStart: obj.placeVisit.duration.startTimestamp,
-                            timestampEnd: obj.placeVisit.duration.endTimestamp
-                        }
-                    });
-                }
-
-                if (obj.activitySegment) {
-                    const waypoints = obj.activitySegment.waypointPath?.waypoints || [];
-                    const coordinates = waypoints.map(wp => [wp.lngE7 / 1e7, wp.latE7 / 1e7]);
-
-                    // Add start and end if no waypoints
-                    if (coordinates.length === 0) {
-                        coordinates.push(
-                            [obj.activitySegment.startLocation.longitudeE7 / 1e7, obj.activitySegment.startLocation.latitudeE7 / 1e7],
-                            [obj.activitySegment.endLocation.longitudeE7 / 1e7, obj.activitySegment.endLocation.latitudeE7 / 1e7]
-                        );
-                    }
-                    
-                    let activityTypeParsed = obj.activitySegment?.activityType != null
-                        ? obj.activitySegment.activityType
-                        : obj.activitySegment.activities[0].activityType
-
-                    features.push({
-                        type: "Feature",
-                        geometry: {
-                            type: "LineString",
-                            coordinates: coordinates
-                        },
-                        properties: {
-                            type: "activitySegment",
-                            activityType: activityTypeParsed,
-                            travelMode: obj.activitySegment.waypointPath?.travelMode != null 
-                                ? obj.activitySegment.waypointPath.travelMode 
-                                : activityTypeParsed,
-                            distanceMeters: haversineDistanceE7(coordinates),
-                            confidence: obj.activitySegment.waypointPath?.confidence,
-                            timestampStart: obj.activitySegment.duration.startTimestamp,
-                            timestampEnd: obj.activitySegment.duration.endTimestamp
-                        }
-                    });
-                }
-            });
-
-            return {
-                type: "FeatureCollection",
-                features
-            };
-            }
-
-        function addNewYearStatsCard(year, markers, activities) {
-            const cardHTML = `
-                <div class="col">
-                    <div class="card">
-                        <div class="card-header">
-                            <strong>${year}</strong>
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><strong>📌 Markers:</strong> ${markers}</li>
-                            <li class="list-group-item">
-                                <strong>✨ Activities: </strong><br><br>
-                                <table>
-                                    <tbody>
-                                        <tr><td>🚶 Walk:  </td><td>${formatDistanceValue(activities.get("WALK"))} km</td></tr>
-                                        <tr><td>🚇 Subway:  </td><td>${formatDistanceValue(activities.get("IN_SUBWAY"))} km</td></tr>
-                                        <tr><td>🚌 Bus:  </td><td>${formatDistanceValue(activities.get("IN_BUS"))} km</td></tr>
-                                        <tr><td>🚗 Car:  </td><td>${formatDistanceValue(activities.get("DRIVE"))} km</td></tr>
-                                        <tr><td>🚅 Train:  </td><td>${formatDistanceValue(activities.get("IN_TRAIN"))} km</td></tr>
-                                        <tr><td>✈️ Flight:  </td><td>${formatDistanceValue(activities.get("FLYING"))} km</td></tr>
-                                    </tbody>
-                                </table>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            `;
-            
-            // Append the new card to the grid
-            const cardGrid = document.getElementById('statsCardGrid');
-            cardGrid.innerHTML += cardHTML; // Adds the new card to the existing grid
-        }
-
-        document.getElementById('btnImport').addEventListener('click', () => {
-            document.getElementById('fileInput').click();
-        });
-        
-        document.getElementById('fileInput').addEventListener('change', async function (event) {
-            const files = event.target.files;
-            if (!files.length) return;
-
-            const btn = document.getElementById('btnImport');
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span role="status"> Loading...</span>';
-            btn.disabled = true;
-
-            const bounds = new maplibregl.LngLatBounds();
-            let locationsMap = new Map();
-            let activitiesMap = new Map();
-
-            for (const file of files) {
-                if (!file.name.endsWith('.json')) continue;  // Skip non-JSON files
-
-                const reader = new FileReader();
-                const year = file.name.split(/[-_]/)[0];
-
-                // Wrap the reader.onload in a Promise to use await
-                await new Promise((resolve, reject) => {
-                    reader.onload = function (e) {
-                        try {
-                            const data = JSON.parse(e.target.result);
-                            const geojson = convertToGeoJSON(data);
-
-                            // Initialize the year if not already done
-                            if (!yearColorMap[year]) {
-                                locationsMap.set(year, 0);
-                                activitiesMap.set(year, new Map());
-
-                                yearColorMap[year] = getRandomColor();
-                                yearMarkersMap[year] = [];
-
-                                // Add checkbox to the legend
-                                const label = document.createElement('label');
-                                label.innerHTML = `
-                                    <input type="checkbox" class="year-checkbox" data-year="${year}" checked />
-                                    <span style="display:inline-block;width:12px;height:12px;background:${yearColorMap[year]};margin-right:6px;"></span>
-                                    ${year}`;
-                                document.getElementById('legend').appendChild(label);
-                            }
-
-                            const markerColor = yearColorMap[year];
-
-                            geojson.features.forEach(feature => {
-                                if (feature.geometry.type === "Point" && feature.properties.type === "placeVisit") {
-                                    const loc = feature.geometry.coordinates;
-                                    const props = feature.properties;
-
-                                    // Optional filtering by confidence
-                                    const original = data.timelineObjects.find(obj =>
-                                        obj.placeVisit?.location.placeId === props.placeId
-                                    );
-                                    const confidence = original?.placeVisit?.location?.locationConfidence || 100;
-                                    if (confidence < 70) return;  // Skip low-confidence markers
-
-                                    // Create and set up the popup
-                                    const popupHTML = `<h6><strong>${props.name}</strong></h6><br>${props.address}<br><em>${formatTimestamp(props.timestampStart)}</em>`;
-                                    const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupHTML);
-
-                                    // Add the marker to the map
-                                    const marker = new maplibregl.Marker({ color: markerColor })
-                                        .setLngLat(loc)
-                                        .setPopup(popup)
-                                        .addTo(map);
-
-                                    yearMarkersMap[year].push(marker);
-                                    bounds.extend(loc);
-
-                                    // Update the count of markers for the year
-                                    locationsMap.set(year, (locationsMap.get(year) || 0) + 1);
-                                }
-
-                                if (feature.geometry.type === "LineString" && feature.properties.type === "activitySegment") {
-                                    let activitiesMapProperties = new Map();
-                                    let travelMode = "";
-
-                                    if (feature.properties.travelMode === "IN_VEHICLE" || feature.properties.travelMode === "IN_PASSENGER_VEHICLE") {
-                                        feature.properties.travelMode = "DRIVE";
-                                    }
-                                    else if(feature.properties.travelMode === "BICYCLE" || feature.properties.travelMode === "WALKING" ) {
-                                        feature.properties.travelMode = "WALK";
-                                    }
-                                    else if(feature.properties.travelMode === "IN_TRAM") {
-                                        feature.properties.travelMode = "IN_SUBWAY";
-                                    }
-                                    
-                                    let currentDistance = activitiesMap.get(year).get(feature.properties.travelMode) || 0;  
-                                    activitiesMap.get(year).set(feature.properties.travelMode, currentDistance + feature.properties.distanceMeters);
-                                }
-                            });
-
-                            resolve();
-                        } catch (err) {
-                            console.error("Error parsing JSON in file:", file.name, err);
-                            reject(err);
-                        }
-                    };
-
-                    reader.onerror = reject;  // Reject the promise if there's a file read error
-                    reader.readAsText(file);  // Start reading the file
-                });
-            }
-            
-            locationsMap.forEach((markers, year) => {
-                addNewYearStatsCard(year, markers, activitiesMap.get(year));
-            });
-
-            setTimeout(() => map.fitBounds(bounds, { padding: 50 }), 500);
-
-            const btnImport = document.getElementById('btnImport');
-            btnImport.innerHTML = 'Import Data';
-            btnImport.disabled = false;
-
-            const btnClear = document.getElementById('btnClearData');
-            btnClear.className = 'btn btn-danger';
-            btnClear.disabled = false;
-        });
-
-        document.getElementById('btnClearData').addEventListener('click', () => {
-            Object.values(yearMarkersMap).flat().forEach(marker => marker.remove());
-            document.getElementById('legend').replaceChildren();
-            yearColorMap = {};
-            yearMarkersMap = {};
-
-            const btnClear = document.getElementById('btnClearData');
-            btnClear.className = 'btn btn-secondary btn-sm';
-            btnClear.disabled = true;
-
-            document.getElementById('statsCardGrid').replaceChildren()
-        });
-
-        document.addEventListener('change', function (e) {
-            if (e.target.classList.contains('year-checkbox')) {
-                const year = e.target.getAttribute('data-year');
-                const show = e.target.checked;
-                yearMarkersMap[year]?.forEach(marker => {
-                    if (show) marker.addTo(map);
-                    else marker.remove();
-                });
-            }
-        });
-    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
