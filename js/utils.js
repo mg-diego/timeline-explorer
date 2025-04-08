@@ -20,6 +20,10 @@ function formatDistanceValue(distance) {
     return distance === undefined ? 0 : (distance / 1000).toFixed(2);
 }
 
+function formatChartDistanceValue(distance) {    
+    return distance === undefined ? 0 : (distance / 1000).toLocaleString('de-DE', {maximumFractionDigits: 0});
+}
+
 function haversineDistanceE7(coordinates) {
     const toRadians = degrees => degrees * (Math.PI / 180);
 

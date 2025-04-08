@@ -33,7 +33,7 @@ function updateStatsTab(locationsMap, activitiesMap) {
                                 <canvas id="markers-chart" width="600" height="600"></canvas>
                             </div>
                             <div class="col">
-                                <h5><strong>✨ Activities: ${formatDistanceValue(activitiesArrayValues.reduce((accumulator, currentValue) => accumulator + currentValue, 0))} km</strong></h5>
+                                <h5><strong>✨ Activities: ${formatChartDistanceValue(activitiesArrayValues.reduce((accumulator, currentValue) => accumulator + currentValue, 0))} km</strong></h5>
                                 <canvas id="activities-chart" width="300" height="300"></canvas>
                             </div>
                         </div>
@@ -52,7 +52,7 @@ function updateStatsTab(locationsMap, activitiesMap) {
             labels: Array.from(locationsMap.keys()).reverse(),
             datasets: [{
                 label: "Markers",
-                data: Array.from(locationsMap.values()), // convert meters to km
+                data: Array.from(locationsMap.values()).reverse(), // convert meters to km
                 backgroundColor: [
                     '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#FF5722', '#00BCD4'
                 ]
@@ -126,12 +126,12 @@ function updateStatsTab(locationsMap, activitiesMap) {
                         <strong>✨ Activities: </strong><br><br>
                         <table>
                             <tbody>
-                                <tr><td>🚶 Walk:  </td><td>${formatDistanceValue(activities.get("WALK"))} km</td></tr>
-                                <tr><td>🚇 Subway:  </td><td>${formatDistanceValue(activities.get("IN_SUBWAY"))} km</td></tr>
-                                <tr><td>🚌 Bus:  </td><td>${formatDistanceValue(activities.get("IN_BUS"))} km</td></tr>
-                                <tr><td>🚗 Car:  </td><td>${formatDistanceValue(activities.get("DRIVE"))} km</td></tr>
-                                <tr><td>🚅 Train:  </td><td>${formatDistanceValue(activities.get("IN_TRAIN"))} km</td></tr>
-                                <tr><td>✈️ Flight:  </td><td>${formatDistanceValue(activities.get("FLYING"))} km</td></tr>
+                                <tr><td>🚶 Walk:  </td><td>${formatChartDistanceValue(activities.get("WALK"))} km</td></tr>
+                                <tr><td>🚇 Subway:  </td><td>${formatChartDistanceValue(activities.get("IN_SUBWAY"))} km</td></tr>
+                                <tr><td>🚌 Bus:  </td><td>${formatChartDistanceValue(activities.get("IN_BUS"))} km</td></tr>
+                                <tr><td>🚗 Car:  </td><td>${formatChartDistanceValue(activities.get("DRIVE"))} km</td></tr>
+                                <tr><td>🚅 Train:  </td><td>${formatChartDistanceValue(activities.get("IN_TRAIN"))} km</td></tr>
+                                <tr><td>✈️ Flight:  </td><td>${formatChartDistanceValue(activities.get("FLYING"))} km</td></tr>
                             </tbody>
                         </table>
                     </li>
