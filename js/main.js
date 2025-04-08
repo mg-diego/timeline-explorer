@@ -185,23 +185,30 @@ document.getElementById('fileInput').addEventListener('change', async function (
 });
 
 const tabs = document.querySelectorAll('.nav-link');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function (e) {
-            const target = e.target.getAttribute('data-bs-target');
+tabs.forEach(tab => {
+    tab.addEventListener('click', function (e) {
+        const target = e.target.getAttribute('data-bs-target');
 
-            // Hide map when Stats tab is selected
-            if (target === '#tab-stats') {
-                document.getElementById('map').style.display = 'none';
-                document.getElementById('activities').style.display = 'none';
-                document.getElementById('stats').style.display = 'block';
-            } else if (target === '#tab-map') {
-                document.getElementById('map').style.display = 'block';
-                document.getElementById('activities').style.display = 'none';
-                document.getElementById('stats').style.display = 'none';
-            } else if (target === '#tab-activities') {
-                document.getElementById('map').style.display = 'none';
-                document.getElementById('activities').style.display = 'block';
-                document.getElementById('stats').style.display = 'none';
-            }
-        });
+        // Hide map when Stats tab is selected
+        if (target === '#tab-stats') {
+            document.getElementById('map').style.display = 'none';
+            document.getElementById('activities').style.display = 'none';
+            document.getElementById('stats').style.display = 'block';
+        } else if (target === '#tab-map') {
+            document.getElementById('map').style.display = 'block';
+            document.getElementById('activities').style.display = 'none';
+            document.getElementById('stats').style.display = 'none';
+        } else if (target === '#tab-activities') {
+            document.getElementById('map').style.display = 'none';
+            document.getElementById('activities').style.display = 'block';
+            document.getElementById('stats').style.display = 'none';
+        }
     });
+});
+
+const rangeInput = document.getElementById("customRange");
+const rangeValue = document.getElementById("rangeValue");
+
+rangeInput.addEventListener("input", function () {
+    rangeValue.textContent = this.value;
+});
