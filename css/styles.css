@@ -15,7 +15,7 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 18%;
+    width: 20%;
     height: 100%;
     background-color: white;
     opacity: 0.8;
@@ -28,18 +28,40 @@ body {
 }
 .stats {
     position: absolute;
-    left: 18%;
+    left: 20%;
     top: 0;
-    width: 82%;
+    width: 80%;
     z-index: 0;
     margin-top: 2%;
     margin-bottom: 5%;
 }
 .map {
     position: absolute;
-    left: 18%;
+    left: 20%;
     top: 0;
-    width: 82%;
+    width: 80%;
     height: 100%;
     z-index: 0;
+}
+.calendar {
+    padding-bottom: 10px;
+    padding-right: 400px; /* optional: to prevent scrollbar overlap */
+}
+.flatpickr-day.highlight-enabled-day {
+    background-color: #d0ebff;
+    color: #004e89;
+    border-radius: 50%;
+    border: 1px solid #91d5ff;
+}
+#btnClearCalendar {
+    width: 100%;
+    margin-top: 10px; /* optional spacing */
+}
+.center-all {
+    display: flex;
+    flex-direction: column;      /* stack items vertically */
+    align-items: center;         /* horizontal center */
+    justify-content: center;     /* vertical center */
+    height: 100%;                /* or set a fixed height */
+    text-align: center;          /* center inline text inside elements */
 }

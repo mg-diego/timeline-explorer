@@ -46,69 +46,38 @@ function haversineDistanceE7(coordinates) {
     return R * c; // Distance in meters
 }
 
-function convertToGeoJSON(timelineData) {
-    const features = [];
-
-    timelineData.timelineObjects.forEach((obj) => {
-        if (obj.placeVisit) {
-            const loc = obj.placeVisit.location;
-            features.push({
-                type: "Feature",
-                geometry: {
-                    type: "Point",
-                    coordinates: [loc.longitudeE7 / 1e7, loc.latitudeE7 / 1e7]
-                },
-                properties: {
-                    type: "placeVisit",
-                    name: loc.name || "Unknown",
-                    address: loc.address || "",
-                    placeId: loc.placeId || null,
-                    timestampStart: obj.placeVisit.duration.startTimestamp,
-                    timestampEnd: obj.placeVisit.duration.endTimestamp
-                }
-            });
-        }
-
-        if (obj.activitySegment) {
-            const waypoints = obj.activitySegment.waypointPath?.waypoints || [];
-            const coordinates = waypoints.map(wp => [wp.lngE7 / 1e7, wp.latE7 / 1e7]);
-
-            // Add start and end if no waypoints
-            if (coordinates.length === 0) {
-                coordinates.push(
-                    [obj.activitySegment.startLocation.longitudeE7 / 1e7, obj.activitySegment.startLocation.latitudeE7 / 1e7],
-                    [obj.activitySegment.endLocation.longitudeE7 / 1e7, obj.activitySegment.endLocation.latitudeE7 / 1e7]
-                );
-            }
-            
-            let activityTypeParsed = obj.activitySegment?.activityType != null
-                ? obj.activitySegment.activityType
-                : obj.activitySegment.activities[0].activityType
-
-            features.push({
-                type: "Feature",
-                geometry: {
-                    type: "LineString",
-                    coordinates: coordinates
-                },
-                properties: {
-                    type: "activitySegment",
-                    activityType: activityTypeParsed,
-                    travelMode: obj.activitySegment.waypointPath?.travelMode != null 
-                        ? obj.activitySegment.waypointPath.travelMode 
-                        : activityTypeParsed,
-                    distanceMeters: haversineDistanceE7(coordinates),
-                    confidence: obj.activitySegment.waypointPath?.confidence,
-                    timestampStart: obj.activitySegment.duration.startTimestamp,
-                    timestampEnd: obj.activitySegment.duration.endTimestamp
-                }
-            });
-        }
-    });
-
-    return {
-        type: "FeatureCollection",
-        features
-    };
+function extractYearFromFilename(filename) {
+    return filename.split(/[-_]/)[0];
 }
 
+function showLoadingState(isLoading) {
+    const btn = document.getElementById('btnImport');
+    btn.innerHTML = isLoading
+        ? '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span role="status"> Loading...</span>'
+        : 'Import Data';
+    btn.disabled = isLoading;
+}
+
+function enableClearButton(enabled) {
+    const btn = document.getElementById('btnClearData');
+    btn.className = enabled ? 'btn btn-danger' : 'btn btn-secondary btn-sm';
+    btn.disabled = !enabled;
+}
+
+function normalizeTravelMode(mode) {
+    if (["IN_VEHICLE", "IN_PASSENGER_VEHICLE"].includes(mode)) return "DRIVE";
+    if (["BICYCLE", "WALKING"].includes(mode)) return "WALK";
+    if (mode === "IN_TRAM") return "IN_SUBWAY";
+    return mode;
+}
+
+
+function addActivityDetails(feature) {
+    const ul = document.getElementById("day-details-list");
+    const li = document.createElement("li");
+
+    li.className = "list-group-item";
+    li.textContent = feature.properties.address;
+
+    ul.appendChild(li);
+}

@@ -1,147 +1,158 @@
+let totals = {
+    WALK: 0,
+    IN_SUBWAY: 0,
+    IN_BUS: 0,
+    DRIVE: 0,
+    IN_TRAIN: 0,
+    FLYING: 0
+};
+
+let locationsMapStats = new Map()
+
 function updateStatsTab(locationsMap, activitiesMap) {
+    const totals = computeTotalActivities(activitiesMap);
+    const totalMarkers = computeTotalMarkers(locationsMap);
 
-    let totalWalk = 0;
-    let totalSubway = 0;
-    let totalBus = 0;
-    let totalDrive = 0;
-    let totalTrain = 0;
-    let totalFlying = 0;
+    renderGlobalStatsCard(totalMarkers, totals);
+    renderMarkersChart(locationsMap);
+    renderActivitiesChart(totals);
+    renderYearlyCards(locationsMap, activitiesMap);
+}
 
-    console.log(activitiesMap)
-    activitiesMap.forEach((activityMap) => {
-        totalWalk += activityMap.get("WALK") || 0;
-        totalSubway += activityMap.get("IN_SUBWAY") || 0;
-        totalDrive += activityMap.get("DRIVE") || 0;
-        totalBus += activityMap.get("IN_BUS") || 0;
-        totalTrain += activityMap.get("IN_TRAIN") || 0;
-        totalFlying += activityMap.get("FLYING") || 0;
+function computeTotalActivities(activitiesMap) {
+    activitiesMap.forEach(activityMap => {
+        for (const type in totals) {
+            totals[type] += activityMap.get(type) || 0;
+        }
     });
 
-    const activitiesArrayValues = [totalWalk, totalSubway, totalBus, totalDrive, totalTrain, totalFlying]
+    return totals;
+}
 
-    const globalCardHTML = `
+function computeTotalMarkers(locationsMap) {
+    return Array.from(locationsMap.values()).reduce((a, b) => a + b, 0);
+}
+
+function renderGlobalStatsCard(totalMarkers, totals) {
+    const totalDistance = Object.values(totals).reduce((a, b) => a + b, 0);
+    const html = `
         <div class="col">
-            <div class="card" >
+            <div class="card">
                 <div class="card-header">
-                    <h4><strong>GLOBAL STATS</strong><h4>
+                    <h4><strong>GLOBAL STATS</strong></h4>
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <div class="row">
                             <div class="col">
-                                <h5><strong>📌 Markers:</strong> ${Array.from(locationsMap.values()).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}</h5>
+                                <h5><strong>📌 Markers:</strong> ${totalMarkers}</h5>
                                 <canvas id="markers-chart" width="600" height="600"></canvas>
                             </div>
                             <div class="col">
-                                <h5><strong>✨ Activities: ${formatChartDistanceValue(activitiesArrayValues.reduce((accumulator, currentValue) => accumulator + currentValue, 0))} km</strong></h5>
+                                <h5><strong>✨ Activities: ${formatChartDistanceValue(totalDistance)} km</strong></h5>
                                 <canvas id="activities-chart" width="300" height="300"></canvas>
                             </div>
                         </div>
                     </li>
                 </ul>
             </div>
-        </div>
-    `;            
-    const globalCardGrid = document.getElementById('globalStatsCardGrid');
-    globalCardGrid.innerHTML += globalCardHTML;
+        </div>`;
 
-    const markersChart = document.getElementById('markers-chart').getContext('2d');
-    new Chart(markersChart, {
+    document.getElementById('globalStatsCardGrid').innerHTML = html;
+}
+
+function renderMarkersChart(locationsMap) {
+    locationsMapStats = new Map([...locationsMapStats, ...locationsMap]);
+    const sortedMap = new Map([...locationsMapStats].sort(([keyA], [keyB]) => keyA.localeCompare(keyB)));
+    const ctx = document.getElementById('markers-chart').getContext('2d');
+    new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: Array.from(locationsMap.keys()).reverse(),
+            labels: Array.from(sortedMap.keys()),
             datasets: [{
-                label: "Markers",
-                data: Array.from(locationsMap.values()).reverse(), // convert meters to km
-                backgroundColor: [
-                    '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#FF5722', '#00BCD4'
-                ]
+                label: 'Markers',
+                data: Array.from(sortedMap.values()),
+                backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#FF5722', '#00BCD4']
             }]
         },
         options: {
-            responsive: false, // Makes the chart responsive
-            maintainAspectRatio: false, // Prevents the chart from maintaining its aspect ratio
+            responsive: false,
+            maintainAspectRatio: false,
             scales: {
-                y: {
-                    beginAtZero: true
-                }
+                y: { beginAtZero: true }
             }
         }
     });
+}
 
-    const activitiesChart = document.getElementById('activities-chart').getContext('2d');
-    new Chart(activitiesChart, {
-        type: 'doughnut', // Change type to 'doughnut'
+function renderActivitiesChart(totals) {
+    const ctx = document.getElementById('activities-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
         data: {
             labels: ['🚶 Walk', '🚇 Subway', '🚌 Bus', '🚗 Car', '🚅 Train', '✈️ Flight'],
             datasets: [{
                 label: 'Distance (km)',
-                data: activitiesArrayValues.map(d => formatDistanceValue(d)), // Convert meters to km
-                backgroundColor: [
-                    '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#FF5722', '#00BCD4'
-                ],
+                data: Object.values(totals).map(formatDistanceValue),
+                backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#FF5722', '#00BCD4'],
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
             plugins: {
-                legend: {
-                    position: 'top', // You can change the position as 'top', 'left', 'bottom', 'right'
-                },
+                legend: { position: 'top' },
                 tooltip: {
                     callbacks: {
-                        label: function(tooltipItem) {
-                            return `${tooltipItem.label}: ${tooltipItem.raw} km`; // Customizing the tooltip
-                        }
+                        label: tooltipItem => `${tooltipItem.label}: ${tooltipItem.raw} km`
                     }
                 },
                 datalabels: {
-                    color: '#FFFFFF', // Change data label text color (e.g., black)
-                    font: {
-                        weight: 'bold'
-                    },
-                    formatter: (value) => {
-                        return value + ' km'; // Display value with unit
-                    }
+                    color: '#FFFFFF',
+                    font: { weight: 'bold' },
+                    formatter: value => `${value} km`
                 }
             },
-            cutout: '70%', // Adjust cutout percentage for the center hole
-            rotation: -90, // Rotate the chart for better display
+            cutout: '70%',
+            rotation: -90
         },
         plugins: [ChartDataLabels]
     });
+}
 
+function renderYearlyCards(locationsMap, activitiesMap) {
+    const container = document.getElementById('statsCardGrid');
     locationsMap.forEach((markers, year) => {
-        const activities = activitiesMap.get(year)
-        const cardHTML = `
+        const activities = activitiesMap.get(year);
+        const html = `
         <div class="col" style="margin-bottom:30px">
             <div class="card">
                 <div class="card-header">
-                    <h5><strong>${year}</strong><h5>
+                    <h5><strong>${year}</strong></h5>
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>📌 Markers:</strong> ${markers}</li>
                     <li class="list-group-item">
-                        <strong>✨ Activities: </strong><br><br>
-                        <table>
-                            <tbody>
-                                <tr><td>🚶 Walk:  </td><td>${formatChartDistanceValue(activities.get("WALK"))} km</td></tr>
-                                <tr><td>🚇 Subway:  </td><td>${formatChartDistanceValue(activities.get("IN_SUBWAY"))} km</td></tr>
-                                <tr><td>🚌 Bus:  </td><td>${formatChartDistanceValue(activities.get("IN_BUS"))} km</td></tr>
-                                <tr><td>🚗 Car:  </td><td>${formatChartDistanceValue(activities.get("DRIVE"))} km</td></tr>
-                                <tr><td>🚅 Train:  </td><td>${formatChartDistanceValue(activities.get("IN_TRAIN"))} km</td></tr>
-                                <tr><td>✈️ Flight:  </td><td>${formatChartDistanceValue(activities.get("FLYING"))} km</td></tr>
-                            </tbody>
-                        </table>
+                        <strong>✨ Activities:</strong><br><br>
+                        <table><tbody>
+                            <tr><td>🚶 Walk:</td><td>${formatChartDistanceValue(activities.get("WALK"))} km</td></tr>
+                            <tr><td>🚇 Subway:</td><td>${formatChartDistanceValue(activities.get("IN_SUBWAY"))} km</td></tr>
+                            <tr><td>🚌 Bus:</td><td>${formatChartDistanceValue(activities.get("IN_BUS"))} km</td></tr>
+                            <tr><td>🚗 Car:</td><td>${formatChartDistanceValue(activities.get("DRIVE"))} km</td></tr>
+                            <tr><td>🚅 Train:</td><td>${formatChartDistanceValue(activities.get("IN_TRAIN"))} km</td></tr>
+                            <tr><td>✈️ Flight:</td><td>${formatChartDistanceValue(activities.get("FLYING"))} km</td></tr>
+                        </tbody></table>
                     </li>
                 </ul>
             </div>
-        </div>
-        `;
-        
-        // Append the new card to the grid
-        const cardGrid = document.getElementById('statsCardGrid');
-        cardGrid.innerHTML += cardHTML; // Adds the new card to the existing grid
+        </div>`;
+
+        container.innerHTML += html;
     });
+}
+
+function resetChartStats() {
+    for (const type in totals) {
+        totals[type] = 0
+    }
 }
