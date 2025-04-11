@@ -22,7 +22,8 @@ const map = new maplibregl.Map({
         }]
     },
     center: [0, 20],
-    zoom: 2
+    zoom: 2,
+    maxZoom: 18
 });
 
 let bounds = new maplibregl.LngLatBounds();
@@ -47,10 +48,13 @@ function addMarker(location, properties, markerColor) {
 }
 
 function extendBounds(feature) {
-    bounds.extend(feature.geometry.coordinates);
+    if (feature.geometry.coordinates != undefined) {
+        bounds.extend(feature.geometry.coordinates);
+    }
 }
 
 function handleActivitySegment(feature, year) {
+    // WIP
     /*
     const normalizedMode = normalizeTravelMode(feature.properties.travelMode);
     const distance = feature.properties.distanceMeters;
@@ -92,13 +96,13 @@ function hideMarkers() {
 }
 
 function showMarker(feature) {
-    console.log(feature.properties.marker)
     if (feature.properties.marker != undefined) {
         feature.properties.marker.getElement().style.display = 'block';
     }
 }
 
 function fitMapBounds() {
-    console.log(bounds)
-    setTimeout(() => map.fitBounds(bounds, { padding: 50 }), 500);
+    if (Object.keys(bounds).length > 0) {
+        setTimeout(() => map.fitBounds(bounds, { padding: 50 }), 500);
+    }
 }

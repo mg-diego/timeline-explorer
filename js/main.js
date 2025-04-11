@@ -1,126 +1,178 @@
-let calendar
+// Global variables
+let calendar;
+let calendarSelectedDates = [''];
 
-document.addEventListener("DOMContentLoaded", function () {
+// Initialize application
+document.addEventListener("DOMContentLoaded", () => {
+    initializeTooltip();
+    initializeCalendar();
+    bindEventListeners();
+});
+
+// Initialize Bootstrap tooltips
+function initializeTooltip() {
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+}
 
+// Initialize Flatpickr calendar
+function initializeCalendar() {
     calendar = flatpickr("#calendar", {
         inline: true,
-        mode: "single",
+        mode: "multiple",
         dateFormat: "Y-m-d",
         enable: [],
-        onChange: function(selectedDates, dateStr) {
-            hideMarkers()
-            bounds = new maplibregl.LngLatBounds();
-            document.getElementById("day-details-list").replaceChildren()
-
-            let features = filterPlaceVisitByDate(dateStr);
-            features.forEach(f => {
-                showMarker(f);
-                addActivityDetails(f)
-                if (f.properties.marker != undefined) extendBounds(f);
-            });
-
-            fitMapBounds()
-        },
-        onDayCreate: function(dObj, dStr, fp, dayElem) {
-            dayElem.classList.add("highlight-enabled-day");
-        }
+        onChange: handleCalendarChange,
+        onDayCreate: handleDayCreate,
     });
-});
+}
 
-document.addEventListener('change', function (e) {
-    if (e.target.classList.contains('year-checkbox')) {
-        const year = e.target.getAttribute('data-year');
-        const show = e.target.checked;
-        yearMarkersMap[year]?.forEach(marker => {
-            if (show) marker.addTo(map);
-            else marker.remove();
-        });
-    }
-});
+// Handle calendar date selection
+function handleCalendarChange(selectedDates, dateStr) {
+    calendarSelectedDates = dateStr.split(",").map(date => date.trim());
+    console.log(calendarSelectedDates)
+    updateMapAndAddActivityDetails(calendarSelectedDates);
+    document.getElementById("btnClearCalendar").disabled = false;
+}
 
-document.getElementById('btnClearCalendar').addEventListener('click', () => {
-    calendar.clear()
-    let placeVisitDateList = getPlaceVisitDateList()
-    calendar.set('enable', placeVisitDateList)
-    calendar.jumpToDate(placeVisitDateList[placeVisitDateList.length - 1]);
-});
+// Add a class to each day in the calendar
+function handleDayCreate(dObj, dStr, fp, dayElem) {
+    dayElem.classList.add("highlight-enabled-day");
+}
 
-document.getElementById('btnClearData').addEventListener('click', () => {
-    removeMarkers()
+// Bind event listeners to DOM elements
+function bindEventListeners() {
+    document.getElementById('btnClearCalendar').addEventListener('click', clearCalendar);
+    document.getElementById('btnClearData').addEventListener('click', clearData);
+    document.getElementById('btnImport').addEventListener('click', triggerFileInput);
+    document.getElementById('fileInput').addEventListener('change', handleFileInputChange);    
+    document.getElementById("customRange").addEventListener("change", handleCustomRangeChange);
+    setupTabNavigation();
+}
 
-    document.getElementById('yearsCheckboxCol1').replaceChildren();
-    document.getElementById('yearsCheckboxCol2').replaceChildren();
-    yearColorMap = {};
+// Clear calendar selection and reset date
+function clearCalendar() {
+    calendar.clear();
+    calendarSelectedDates = ['']
+    refresh()
+}
 
+// Clear all data and reset state
+function clearData() {
+    removeMarkers();
+    resetClearDataButton();
+    resetFileInput(); 
+    resetCalendarState();     
+    clearActivityDetails();
+    resetStatsTab();
+    resetMapView();
+}
+
+// Reset the button for clearing data
+function resetClearDataButton() {
     const btnClear = document.getElementById('btnClearData');
     btnClear.className = 'btn btn-secondary btn-sm';
     btnClear.disabled = true;
+}
 
-    document.getElementById('globalStatsCardGrid').replaceChildren()  
-    document.getElementById('statsCardGrid').replaceChildren()   
-    
-    $("#fileInput")[0].value = ''; // Reset the file input to allow to upload again the same year
+// Clear stats displayed on the page
+function clearActivityDetails() {
+    document.getElementById("day-details-list").replaceChildren();
+    document.getElementById("legend").replaceChildren()
+}
 
-    map.flyTo({ center: [0,20], zoom: 2 });
-    resetChartStats()
+// Reset the file input to allow uploading again
+function resetFileInput() {
+    $("#fileInput")[0].value = ''; // Reset file input
+}
 
-    calendar.set('enable', [])
-    calendar.redraw();
+// Reset calendar to initial state
+function resetCalendarState() {
+    const customRange = document.getElementById("customRange")
+    customRange.disabled = true;
+    customRange.value = "0";    
 
+    calendar.set('enable', []);
+    calendar.redraw();    
     document.getElementById("btnClearCalendar").disabled = true;
-});
+}
 
-document.getElementById('btnImport').addEventListener('click', () => {
+// Reset map view
+function resetMapView() {
+    map.flyTo({ center: [0, 20], zoom: 2 });
+}
+
+// Reset chart stats
+function resetStatsTab() {
+    document.getElementById('globalStatsCardGrid').replaceChildren();
+    document.getElementById('statsCardGrid').replaceChildren();
+}
+
+// Trigger the file input dialog
+function triggerFileInput() {
     document.getElementById('fileInput').click();
-});
+}
 
-document.getElementById('fileInput').addEventListener('change', async function (event) {
+// Handle file input change (processing uploaded files)
+async function handleFileInputChange(event) {
     const files = event.target.files;
     if (!files.length) return;
 
-    showLoadingState(true);    
+    showLoadingState(true);
 
     for (const file of files) {
-        if (!file.name.endsWith('.json')) continue;
-        await processFile(file);
+        if (file.name.endsWith('.json')) {
+            await processFile(file);
+        }
     }
 
-    //updateStatsTab(locationsMap, activitiesMap); PENDING
-    fitMapBounds()
-
+    fitMapBounds();
     showLoadingState(false);
     enableClearButton(true);
-    
-    let placeVisitDateList = getPlaceVisitDateList()
-    calendar.set('enable', placeVisitDateList)
+
+    document.getElementById("customRange").disabled = false;
+    document.getElementById("customRange").value = 80
+    updateMapAndAddActivityDetails(calendarSelectedDates);
+    refresh()
+
+    document.getElementById("btnClearCalendar").disabled = false;    
+}
+
+// Handle custom range change
+function handleCustomRangeChange() {
+    setTimeout(() => {
+        if (document.getElementById("customRange").disabled != true) {            
+            updateMapAndAddActivityDetails(calendarSelectedDates);
+            refresh()
+        }
+    }
+    , 500);
+}
+
+function refresh() {
+    let placeVisitDateList = getPlaceVisitDateListByConfidence();
+    calendar.set('enable', placeVisitDateList);
     calendar.jumpToDate(placeVisitDateList[placeVisitDateList.length - 1]);
     calendar.redraw();
-    document.getElementById("btnClearCalendar").disabled = false;
-});
+}
 
-const tabs = document.querySelectorAll('.nav-link');
-tabs.forEach(tab => {
-    tab.addEventListener('click', function (e) {        
-        const target = e.target.getAttribute('data-bs-target');
-
-        // Hide map when Stats tab is selected
-        if (target === '#tab-stats') {
-            document.getElementById('map').style.display = 'none';
-            document.getElementById('stats').style.display = 'block';
-        } else if (target === '#tab-map') {
-            document.getElementById('map').style.display = 'block';
-            document.getElementById('stats').style.display = 'none';
-        }
+// Set up tab navigation (show map or stats)
+function setupTabNavigation() {
+    const tabs = document.querySelectorAll('.nav-link');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => handleTabClick(e));
     });
-});
+}
 
-const rangeInput = document.getElementById("customRange");
-const rangeValue = document.getElementById("rangeValue");
+// Handle tab click event (map or stats)
+function handleTabClick(e) {
+    const target = e.target.getAttribute('data-bs-target');
 
-rangeInput.addEventListener("input", function () {
-    rangeValue.textContent = this.value;
-});
+    if (target === '#tab-stats') {
+        document.getElementById('map').style.display = 'none';
+        document.getElementById('stats').style.display = 'block';
+    } else if (target === '#tab-map') {
+        document.getElementById('map').style.display = 'block';
+        document.getElementById('stats').style.display = 'none';
+    }
+}

@@ -71,13 +71,57 @@ function normalizeTravelMode(mode) {
     return mode;
 }
 
+function formatDate(dt) {
+    let date = new Date(dt);
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+
+    return date.toLocaleDateString('en-US', options);
+}
 
 function addActivityDetails(feature) {
     const ul = document.getElementById("day-details-list");
     const li = document.createElement("li");
 
     li.className = "list-group-item";
-    li.textContent = feature.properties.address;
+    li.innerHTML = `<strong>${feature.properties.name}</strong><br>  ${feature.properties.address}<br> <br><u>Confidence:</u> <span style="color: green;">${feature.properties.locationConfidence}</span>`
 
     ul.appendChild(li);
+}
+
+function addActivityDay(date) {
+    const ul = document.getElementById("day-details-list");
+    const li = document.createElement("li");
+
+    li.className = "list-group-item";
+    li.style = "background-color: lightgray";
+    li.innerHTML = `<strong>${date}</strong>`;
+
+    ul.appendChild(li);
+}
+
+function updateMapAndAddActivityDetails(selectedDates) {
+    console.log(selectedDates)
+    hideMarkers()
+    bounds = new maplibregl.LngLatBounds();
+    document.getElementById("day-details-list").replaceChildren()
+
+    let features = filterPlaceVisitByDateAndConfidence(selectedDates);
+    let lastDay = ''
+    features.forEach(f => {
+        let formatDateValue = formatDate(f.properties.timestampStart)
+        showMarker(f);
+        if (formatDateValue != lastDay) {
+            lastDay = formatDateValue;
+            addActivityDay(formatDateValue)
+        }
+        addActivityDetails(f)
+        if (f.properties.marker != undefined) extendBounds(f);
+    });
+
+    fitMapBounds()
 }

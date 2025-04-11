@@ -77,7 +77,6 @@ async function processFeatures(geojson, year) {
             let newMarker = await handlePlaceVisit(feature, yearColorMap[year]);
             feature.properties.marker = newMarker
             placeVisitList.push(feature)
-            console.log(placeVisitList)
         } else if (feature.geometry.type === "LineString" && feature.properties.type === "activitySegment") {
             activitySegmentList.push(feature)
             handleActivitySegment(feature, year);           
@@ -120,24 +119,35 @@ function addYearCheckbox(year) {
         // Crear y añadir checkbox
         const label = document.createElement('label');
         label.innerHTML = `
-            <input type="checkbox" class="year-checkbox" data-year="${year}" checked />
-            <span style="display:inline-block;width:12px;height:12px;background:${yearColorMap[year]};margin-right:6px;"></span>
+            <span style="display:inline-block;width:12px;height:12px;background:${yearColorMap[year]};margin-left:6px;"></span>
             ${year}`;
-        const columnId = Object.keys(yearColorMap).length % 2 === 0 ? 'yearsCheckboxCol2' : 'yearsCheckboxCol1';
-        document.getElementById(columnId).appendChild(label);
+        document.getElementById("legend").appendChild(label);
     }
 }
 
-function filterPlaceVisitByDate(date) {
-    console.log(date)
-    return placeVisitList.filter(feature => {
-        return feature.properties?.timestampStart?.includes(date);
+function filterPlaceVisitByDateAndConfidence(dates) {
+    const confidenceThreshold = document.getElementById("customRange").value;
+
+    const places = placeVisitList.filter(feature => {
+        const timestamp = feature.properties?.timestampStart;
+        return (
+            dates.some(date => timestamp?.includes(date)) &&
+            feature.properties?.locationConfidence >= confidenceThreshold
+        );
     });
+
+    return places
+        .sort((a, b) => new Date(a.properties.timestampStart) - new Date(b.properties.timestampStart))
+        .reverse();
 }
 
-function getPlaceVisitDateList() {
+function getPlaceVisitDateListByConfidence() {
     let dates = []
-    placeVisitList.forEach(p => dates.push(p.properties?.timestampStart))
+    placeVisitList.forEach(p => {
+        if(p.properties?.locationConfidence >= document.getElementById("customRange").value){
+            dates.push(p.properties?.timestampStart)
+        } 
+    });
     return dates.sort()
 }
 
