@@ -30,9 +30,15 @@ function initializeCalendar() {
 // Handle calendar date selection
 function handleCalendarChange(selectedDates, dateStr) {
     calendarSelectedDates = dateStr.split(",").map(date => date.trim());
-    console.log(calendarSelectedDates)
+    console.log(selectedDates)
     updateMapAndAddActivityDetails(calendarSelectedDates);
-    document.getElementById("btnClearCalendar").disabled = false;
+    if (selectedDates.length === 0) {
+        removeLines()
+        document.getElementById("btnClearCalendar").disabled = true;
+    } else {
+        document.getElementById("btnClearCalendar").disabled = false;
+    }
+    
 }
 
 // Add a class to each day in the calendar
@@ -54,12 +60,14 @@ function bindEventListeners() {
 function clearCalendar() {
     calendar.clear();
     calendarSelectedDates = ['']
+    removeLines();
     refresh()
 }
 
 // Clear all data and reset state
 function clearData() {
     removeMarkers();
+    removeLines();
     resetClearDataButton();
     resetFileInput(); 
     resetCalendarState();     
@@ -143,16 +151,19 @@ function handleCustomRangeChange() {
     setTimeout(() => {
         if (document.getElementById("customRange").disabled != true) {            
             updateMapAndAddActivityDetails(calendarSelectedDates);
-            refresh()
+            refresh(calendarSelectedDates)
         }
     }
     , 500);
 }
 
-function refresh() {
+function refresh(calendarSelectedDates) {
     let placeVisitDateList = getPlaceVisitDateListByConfidence();
     calendar.set('enable', placeVisitDateList);
-    calendar.jumpToDate(placeVisitDateList[placeVisitDateList.length - 1]);
+    console.log(calendarSelectedDates)
+    if(calendarSelectedDates[0] === '') {
+        calendar.jumpToDate(placeVisitDateList[placeVisitDateList.length - 1]);
+    }    
     calendar.redraw();
 }
 

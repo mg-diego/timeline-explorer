@@ -105,23 +105,32 @@ function addActivityDay(date) {
 }
 
 function updateMapAndAddActivityDetails(selectedDates) {
-    console.log(selectedDates)
     hideMarkers()
+    removeLines()
     bounds = new maplibregl.LngLatBounds();
     document.getElementById("day-details-list").replaceChildren()
 
-    let features = filterPlaceVisitByDateAndConfidence(selectedDates);
+    let places = filterPlaceVisitByDateAndConfidence(selectedDates);
+    
     let lastDay = ''
-    features.forEach(f => {
-        let formatDateValue = formatDate(f.properties.timestampStart)
-        showMarker(f);
+
+    places.forEach(p => {
+        let formatDateValue = formatDate(p.properties.timestampStart)
+        showMarker(p);
         if (formatDateValue != lastDay) {
             lastDay = formatDateValue;
             addActivityDay(formatDateValue)
         }
-        addActivityDetails(f)
-        if (f.properties.marker != undefined) extendBounds(f);
+        addActivityDetails(p)
+        if (p.properties.marker != undefined) extendBounds(p);
     });
+
+    if (selectedDates[0] != '') {
+        let activities = filterActivitySegmentByDateAndConfidence(selectedDates)
+        activities.forEach(a => {
+            handleActivitySegment(a, undefined)
+        })
+    }
 
     fitMapBounds()
 }

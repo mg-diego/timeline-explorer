@@ -57,7 +57,7 @@ function convertToGeoJSON(timelineData) {
                         ? obj.activitySegment.waypointPath.travelMode 
                         : activityTypeParsed,
                     distanceMeters: haversineDistanceE7(coordinates),
-                    confidence: obj.activitySegment.waypointPath?.confidence,
+                    locationConfidence: obj.activitySegment.waypointPath?.confidence * 100 || 0,
                     timestampStart: obj.activitySegment.duration.startTimestamp,
                     timestampEnd: obj.activitySegment.duration.endTimestamp
                 }
@@ -78,8 +78,7 @@ async function processFeatures(geojson, year) {
             feature.properties.marker = newMarker
             placeVisitList.push(feature)
         } else if (feature.geometry.type === "LineString" && feature.properties.type === "activitySegment") {
-            activitySegmentList.push(feature)
-            handleActivitySegment(feature, year);           
+            activitySegmentList.push(feature) // Do not render all the segments in the initial load to avoid performance issues.
         }
     }
 }
@@ -151,6 +150,17 @@ function getPlaceVisitDateListByConfidence() {
     return dates.sort()
 }
 
-function getActivitySegmentListByDate() {
-    // PENDING
+function filterActivitySegmentByDateAndConfidence(dates) {
+    const confidenceThreshold = document.getElementById("customRange").value;
+
+    const activities = activitySegmentList.filter(feature => {
+        const timestamp = feature.properties?.timestampStart;
+        return (
+            dates.some(date => timestamp?.includes(date)) && feature.properties?.locationConfidence >= confidenceThreshold
+        );
+    });
+
+    return activities
+        .sort((a, b) => new Date(a.properties.timestampStart) - new Date(b.properties.timestampStart))
+        .reverse();
 }
