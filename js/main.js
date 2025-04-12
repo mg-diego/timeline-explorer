@@ -112,8 +112,10 @@ function resetMapView() {
 
 // Reset chart stats
 function resetStatsTab() {
+    resetChartStats()
     document.getElementById('globalStatsCardGrid').replaceChildren();
     document.getElementById('statsCardGrid').replaceChildren();
+    document.getElementById('data-placeholder').style = "block";
 }
 
 // Trigger the file input dialog
@@ -143,7 +145,10 @@ async function handleFileInputChange(event) {
     updateMapAndAddActivityDetails(calendarSelectedDates);
     refresh()
 
-    document.getElementById("btnClearCalendar").disabled = false;    
+    document.getElementById("btnClearCalendar").disabled = false;
+    
+    updateStatsTab(placeVisitList, activitySegmentList)
+    document.getElementById('data-placeholder').style = "none";
 }
 
 // Handle custom range change
@@ -161,7 +166,7 @@ function refresh(calendarSelectedDates) {
     let placeVisitDateList = getPlaceVisitDateListByConfidence();
     calendar.set('enable', placeVisitDateList);
     console.log(calendarSelectedDates)
-    if(calendarSelectedDates[0] === '') {
+    if (calendarSelectedDates != undefined && calendarSelectedDates[0] === '') {
         calendar.jumpToDate(placeVisitDateList[placeVisitDateList.length - 1]);
     }    
     calendar.redraw();

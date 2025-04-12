@@ -21,9 +21,7 @@ function updateStatsTab(locationsMap, activitiesMap) {
 
 function computeTotalActivities(activitiesMap) {
     activitiesMap.forEach(activityMap => {
-        for (const type in totals) {
-            totals[type] += activityMap.get(type) || 0;
-        }
+        totals[activityMap.properties.activityType] += activityMap.properties.distanceMeters || 0
     });
 
     return totals;
@@ -121,7 +119,8 @@ function renderActivitiesChart(totals) {
 }
 
 function renderYearlyCards(locationsMap, activitiesMap) {
-    const container = document.getElementById('statsCardGrid');
+    // PENDING
+    /*const container = document.getElementById('statsCardGrid');
     locationsMap.forEach((markers, year) => {
         const activities = activitiesMap.get(year);
         const html = `
@@ -148,7 +147,7 @@ function renderYearlyCards(locationsMap, activitiesMap) {
         </div>`;
 
         container.innerHTML += html;
-    });
+    });*/
 }
 
 function resetChartStats() {

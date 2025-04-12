@@ -26,62 +26,74 @@
                 github.com/mg-diego
             </a>
         </small>
-
+    
         <div class="d-flex gap-2 mb-3">
             <button id="btnImport" class="btn btn-primary btn-sm">Import Data</button>
             <button id="btnClearData" class="btn btn-secondary btn-sm" disabled>Clear Data</button>
         </div>
-
+    
         <input type="file" id="fileInput" style="display: none" multiple webkitdirectory />
+    
+        <!-- TABS -->
         <ul class="nav nav-tabs mb-3" id="sidebarTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="tab-map-tab" data-bs-toggle="tab" data-bs-target="#tab-map"
+                <button class="nav-link active" id="tab-map-tab" data-bs-toggle="tab" data-bs-target="#tab-map-panel"
                     type="button" role="tab">🗺️ Map</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-stats-tab" data-bs-toggle="tab" data-bs-target="#tab-stats"
+                <button class="nav-link" id="tab-stats-tab" data-bs-toggle="tab" data-bs-target="#tab-stats-panel"
                     type="button" role="tab">📊 Stats</button>
             </li>
         </ul>
-        <div class="tab-content flex-grow-1 text-bg-light p-3" id="sidebarTabContent" style="overflow-y: auto;">
-            <div class="tab-pane fade show active" id="tab-map" role="tabpanel">
-                <div class="gap-10">
-                    <small data-bs-toggle="tooltip" data-bs-html="true"
-                        title="The confidence value in Google Takeout’s Location History / Timeline JSON files represents how confident Google is that a certain location data point is accurate<br><br> • 100 = Very confident the location is accurate <br><br>• <80 = likely imprecise or noisy location (e.g., based on weak GPS or Wi-Fi signal)"
-                        for="customRange" class="form-label"><strong>ℹ️ Confidence: </strong>
-                    </small>
-                    <tc-range-slider style="max-width: 30vh;" theme="rainbow" id="customRange" step="1" min="0"
-                        max="100" value="0" generate-labels="true" disabled="true"></tc-range-slider>
-                    <div style="padding-bottom: 20px"></div>
-                </div>
-
-                <!-- Calendar Filter Section -->
-                <div id="calendar-filter" style="padding:10px" class="center-all">
-                    <div id="calendar" class="calendarWrapper"></div>
-                    <button id="btnClearCalendar" class="btn btn-dark btn-sm" disabled>Clear 
-                        Selection</button>
-                    <div style="padding-bottom: 20px"></div>
-                </div>
-
-                <ul class="list-group list-group-flush overflow-auto" style="max-height: 60vh;" id="day-details-list">
-                </ul>
+    
+        <!-- SIDEBAR CONTENT (always visible) -->
+        <div class="tab-content flex-grow-1 text-bg-light p-3" id="sidebarContent" style="overflow-y: auto;">
+    
+            <!-- Confidence Section -->
+            <div class="mb-2">
+                <small data-bs-toggle="tooltip" data-bs-html="true"
+                    title="The confidence value in Google Takeout’s Location History / Timeline JSON files represents how confident Google is that a certain location data point is accurate<br><br> • 100 = Very confident the location is accurate <br><br>• <80 = likely imprecise or noisy location (e.g., based on weak GPS or Wi-Fi signal)"
+                    class="form-label"><strong>ℹ️ Confidence: </strong>
+                </small>
+                <tc-range-slider style="max-width: 30vh;" theme="rainbow" id="customRange" step="1" min="0"
+                    max="100" value="0" generate-labels="true" disabled="true"></tc-range-slider>
             </div>
-
-            <div class="tab-pane fade" id="tab-stats" role="tabpanel">
-                <p>Import data to see the Stats</p>
+        
+            <!-- Calendar Filter Section -->
+            <div id="calendar-filter" class="d-flex flex-column align-items-center mb-3">
+                <div id="calendar" class="calendarWrapper mb-2"></div>
+                <button id="btnClearCalendar" class="btn btn-dark btn-sm" disabled>Clear Selection</button>
+            </div>
+        
+            <!-- Day Details List -->
+            <ul class="list-group list-group-flush overflow-auto" style="max-height: 60vh;" id="day-details-list"></ul>
+        </div>
+    </div>
+    
+    <!-- CENTRAL PANEL AREA (map/stats switch here) -->
+    <div class="tab-content flex-grow-1" id="sidebarTabContent">
+        <!-- MAP PANEL -->
+        <div class="tab-pane fade show active" id="tab-map-panel" role="tabpanel">
+            <div id="map" class="map" style="display: block;">
+                <div id="legend" style="position: absolute; bottom: 0; left: 0; z-index: 10;"></div>
+            </div>
+        </div>
+    
+        <!-- STATS PANEL -->
+        <div class="tab-pane fade" id="tab-stats-panel" role="tabpanel">
+            <div id="stats" class="stats" style="display: block;">
+                <div class="container">
+                    <div class="row row-cols-1 row-cols-md-1 g-1" style="margin-bottom:30px" id="globalStatsCardGrid"></div>
+                    <div id="data-placeholder">
+                        <h2>Import data to see the stats.</h2>
+                        <img src="img/Screenshot 2025-04-12 203021.png">
+                    </div>
+                    <div class="row row-cols-1 row-cols-md-5 g-5" style="margin-bottom:30px" id="statsCardGrid"></div>
+                </div>
             </div>
         </div>
     </div>
-
-    <div id="map" class="map" style="display: block;">
-        <div id="legend" style="position: absolute; bottom: 0; left: 0; z-index: 10;"></div>
-    </div>
-    <div id="stats" class="stats" style="display: none;">
-        <div class="container">
-            <div class="row row-cols-1 row-cols-md-1 g-1" style="margin-bottom:30px" id="globalStatsCardGrid"></div>
-            <div class="row row-cols-1 row-cols-md-5 g-5" style="margin-bottom:30px" id="statsCardGrid"></div>
-        </div>
-    </div>
+    
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
