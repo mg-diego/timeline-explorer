@@ -1,4 +1,4 @@
-let totals = {
+let activityDetails = {
     WALK: 0,
     IN_SUBWAY: 0,
     IN_BUS: 0,
@@ -7,32 +7,35 @@ let totals = {
     FLYING: 0
 };
 
-let locationsMapStats = new Map()
+let locationTotalsPerYear = new Map();
+let locationTotalsPerCountry = new Map();
+let activityTotalsPerYear = new Map();
 
 function updateStatsTab(locationsMap, activitiesMap) {
-    const totals = computeTotalActivities(activitiesMap);
-    const totalMarkers = computeTotalMarkers(locationsMap);
+    locationTotalsPerYear = new Map([...locationTotalsPerYear, ...computeTotalLocationsPerYear(locationsMap)]);
+    activityTotalsPerYear = computeTotalActivitiesPerYear(activitiesMap);
+    locationTotalsPerCountry = computeTotalLocationsPerCountry(locationsMap)
+    console.log(locationTotalsPerCountry)
 
-    renderGlobalStatsCard(totalMarkers, totals);
-    renderMarkersChart(locationsMap);
-    renderActivitiesChart(totals);
-    renderYearlyCards(locationsMap, activitiesMap);
+    renderGlobalStatsCard(locationTotalsPerYear, activityTotalsPerYear);
+    renderMarkersChart(locationTotalsPerYear);
+    renderActivitiesChart(activityTotalsPerYear);
+    renderYearlyCards(locationTotalsPerYear, activityTotalsPerYear);
 }
 
-function computeTotalActivities(activitiesMap) {
-    activitiesMap.forEach(activityMap => {
-        totals[activityMap.properties.activityType] += activityMap.properties.distanceMeters || 0
-    });
+function renderGlobalStatsCard(locationTotalsPerYear, activityTotalsPerYear) {
+    let totalLocations = 0
+    for (let value of locationTotalsPerYear.values()) {
+        totalLocations += value;
+    }
 
-    return totals;
-}
+    let totalDistance = 0
+    for (let activityDetails of activityTotalsPerYear.values()) {
+        for (let distance of Object.values(activityDetails)) {
+            totalDistance += distance;
+        }
+    }
 
-function computeTotalMarkers(locationsMap) {
-    return Array.from(locationsMap.values()).reduce((a, b) => a + b, 0);
-}
-
-function renderGlobalStatsCard(totalMarkers, totals) {
-    const totalDistance = Object.values(totals).reduce((a, b) => a + b, 0);
     const html = `
         <div class="col">
             <div class="card">
@@ -43,11 +46,11 @@ function renderGlobalStatsCard(totalMarkers, totals) {
                     <li class="list-group-item">
                         <div class="row">
                             <div class="col">
-                                <h5><strong>📌 Markers:</strong> ${totalMarkers}</h5>
+                                <h5><strong>📌 Markers:</strong> ${totalLocations}</h5>
                                 <canvas id="markers-chart" width="600" height="600"></canvas>
                             </div>
                             <div class="col">
-                                <h5><strong>✨ Activities: ${formatChartDistanceValue(totalDistance)} km</strong></h5>
+                                <h5><strong>✨ Activities:</strong> ${formatChartDistanceValue(totalDistance)} km</h5>
                                 <canvas id="activities-chart" width="300" height="300"></canvas>
                             </div>
                         </div>
@@ -59,9 +62,8 @@ function renderGlobalStatsCard(totalMarkers, totals) {
     document.getElementById('globalStatsCardGrid').innerHTML = html;
 }
 
-function renderMarkersChart(locationsMap) {
-    locationsMapStats = new Map([...locationsMapStats, ...locationsMap]);
-    const sortedMap = new Map([...locationsMapStats].sort(([keyA], [keyB]) => keyA.localeCompare(keyB)));
+function renderMarkersChart(locationTotalsPerYear) {
+    const sortedMap = new Map([...locationTotalsPerYear].sort(([keyA], [keyB]) => keyA - keyB));
     const ctx = document.getElementById('markers-chart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
@@ -84,14 +86,22 @@ function renderMarkersChart(locationsMap) {
 }
 
 function renderActivitiesChart(totals) {
+    const totalPerCategory = {};
+
+    for (const [year, activityMap] of totals) {
+        for (const [category, distance] of Object.entries(activityMap)) {
+            totalPerCategory[category] = (totalPerCategory[category] || 0) + distance;
+        }
+    }
+
     const ctx = document.getElementById('activities-chart').getContext('2d');
     new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['🚶 Walk', '🚇 Subway', '🚌 Bus', '🚗 Car', '🚅 Train', '✈️ Flight'],
+            labels: Object.keys(totalPerCategory), //['🚶 Walk', '🚇 Subway', '🚌 Bus', '🚗 Car', '🚅 Train', '✈️ Flight'],
             datasets: [{
                 label: 'Distance (km)',
-                data: Object.values(totals).map(formatDistanceValue),
+                data: Object.values(totalPerCategory).map(formatDistanceValue),
                 backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#FF5722', '#00BCD4'],
                 borderWidth: 1
             }]
@@ -120,7 +130,7 @@ function renderActivitiesChart(totals) {
 
 function renderYearlyCards(locationsMap, activitiesMap) {
     // PENDING
-    /*const container = document.getElementById('statsCardGrid');
+    const container = document.getElementById('statsCardGrid');
     locationsMap.forEach((markers, year) => {
         const activities = activitiesMap.get(year);
         const html = `
@@ -134,12 +144,12 @@ function renderYearlyCards(locationsMap, activitiesMap) {
                     <li class="list-group-item">
                         <strong>✨ Activities:</strong><br><br>
                         <table><tbody>
-                            <tr><td>🚶 Walk:</td><td>${formatChartDistanceValue(activities.get("WALK"))} km</td></tr>
-                            <tr><td>🚇 Subway:</td><td>${formatChartDistanceValue(activities.get("IN_SUBWAY"))} km</td></tr>
-                            <tr><td>🚌 Bus:</td><td>${formatChartDistanceValue(activities.get("IN_BUS"))} km</td></tr>
-                            <tr><td>🚗 Car:</td><td>${formatChartDistanceValue(activities.get("DRIVE"))} km</td></tr>
-                            <tr><td>🚅 Train:</td><td>${formatChartDistanceValue(activities.get("IN_TRAIN"))} km</td></tr>
-                            <tr><td>✈️ Flight:</td><td>${formatChartDistanceValue(activities.get("FLYING"))} km</td></tr>
+                            <tr><td>🚶 Walk:</td><td>${formatChartDistanceValue(activities["WALKING"])} km</td></tr>
+                            <tr><td>🚇 Subway:</td><td>${formatChartDistanceValue(activities["IN_SUBWAY"])} km</td></tr>
+                            <tr><td>🚌 Bus:</td><td>${formatChartDistanceValue(activities["IN_BUS"])} km</td></tr>
+                            <tr><td>🚗 Car:</td><td>${formatChartDistanceValue(activities["IN_PASSENGER_VEHICLE"])} km</td></tr>
+                            <tr><td>🚅 Train:</td><td>${formatChartDistanceValue(activities["IN_TRAIN"])} km</td></tr>
+                            <tr><td>✈️ Flight:</td><td>${formatChartDistanceValue(activities["FLYING"])} km</td></tr>
                         </tbody></table>
                     </li>
                 </ul>
@@ -147,11 +157,65 @@ function renderYearlyCards(locationsMap, activitiesMap) {
         </div>`;
 
         container.innerHTML += html;
-    });*/
+    })
 }
 
 function resetChartStats() {
-    for (const type in totals) {
-        totals[type] = 0
-    }
+    locationTotalsPerYear = new Map();
+    activityTotalsPerYear = new Map();
+}
+
+function computeTotalLocationsPerYear(map) {
+    const yearMap = new Map();
+
+    map.forEach(m => {
+        const timestamp = m.properties?.timestampStart;
+        if (timestamp) {
+            const year = new Date(timestamp).getUTCFullYear();
+            if (!locationTotalsPerYear.get(year)) {
+                yearMap.set(year, (yearMap.get(year) || 0) + 1);
+            }
+        }
+    });
+    return yearMap;
+}
+
+function computeTotalLocationsPerCountry(map) {
+    const yearMap = new Map();
+
+    map.forEach(m => {
+        const country = m.properties?.country;
+        if (country) {
+            if (!locationTotalsPerYear.get(country)) {
+                yearMap.set(country, (yearMap.get(country) || 0) + 1);
+            }
+        }
+    });
+    return yearMap;
+}
+
+function computeTotalActivitiesPerYear(activitiesMap) {
+    const yearMap = new Map();
+
+    activitiesMap.forEach(activityMap => {
+        const timestamp = activityMap.properties?.timestampStart;
+        const activityType = activityMap.properties?.activityType;
+        const distance = activityMap.properties?.distanceMeters || 0;
+
+        if (timestamp && activityType) {
+            const year = new Date(timestamp).getUTCFullYear();
+
+            // Get or create the map for this year
+            let activityDetails = yearMap.get(year);
+            if (!activityDetails) {
+                activityDetails = {};
+                yearMap.set(year, activityDetails);
+            }
+
+            // Accumulate the distance for the activity type
+            activityDetails[activityType] = (activityDetails[activityType] || 0) + distance;
+        }
+    });
+
+    return yearMap;
 }

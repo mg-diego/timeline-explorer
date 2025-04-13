@@ -115,7 +115,7 @@ function resetStatsTab() {
     resetChartStats()
     document.getElementById('globalStatsCardGrid').replaceChildren();
     document.getElementById('statsCardGrid').replaceChildren();
-    document.getElementById('data-placeholder').style = "block";
+    document.getElementById('data-placeholder').style.display = "block";
 }
 
 // Trigger the file input dialog
@@ -147,8 +147,8 @@ async function handleFileInputChange(event) {
 
     document.getElementById("btnClearCalendar").disabled = false;
     
+    document.getElementById('data-placeholder').style.display = "none";
     updateStatsTab(placeVisitList, activitySegmentList)
-    document.getElementById('data-placeholder').style = "none";
 }
 
 // Handle custom range change

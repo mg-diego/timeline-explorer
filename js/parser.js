@@ -9,6 +9,10 @@ function convertToGeoJSON(timelineData) {
     timelineData.timelineObjects.forEach((obj) => {
         if (obj.placeVisit) {
             const loc = obj.placeVisit.location;
+            const address = loc.address || ""
+            const country = address.length > 1
+                ? address.split(",")[address.split(",").length - 1].trim()
+                : "";
             features.push({
                 type: "Feature",
                 geometry: {
@@ -18,11 +22,12 @@ function convertToGeoJSON(timelineData) {
                 properties: {
                     type: "placeVisit",
                     name: loc.name || "Unknown",
-                    address: loc.address || "",
+                    address: address,
                     placeId: loc.placeId || null,
                     timestampStart: obj.placeVisit.duration.startTimestamp,
                     timestampEnd: obj.placeVisit.duration.endTimestamp,
                     locationConfidence: loc.locationConfidence || 0,
+                    country: country,
                     marker: undefined
                 }
             });
