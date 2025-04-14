@@ -2,9 +2,9 @@
 
 Timeline Explorer is a web-based tool to visualize your **Google Location History** (Takeout data) in an interactive and colorful map interface. Explore your past travels, see where you've been by year, and analyze your transportation habits with charts.
 
-![Map](https://i.imgur.com/ZIAdYMl.gif)
+![Map](img/map.gif)
 
-![Stats](https://i.imgur.com/1HDBVaQ.gif)
+![Stats](img/stats.gif)
 
 ## ✨ Features
 
