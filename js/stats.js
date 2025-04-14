@@ -13,7 +13,6 @@ let activityTotalsPerYear = new Map();
 
 function updateStatsTab(locationsMap, activitiesMap) {
     const computedTotals = computeTotalLocationsPerYear(locationsMap);
-    console.log(computedTotals)
 
     for (let [key, value] of computedTotals) {
         if (!locationTotalsPerYear.has(key)) {

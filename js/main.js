@@ -148,6 +148,8 @@ async function handleFileInputChange(event) {
     
     document.getElementById('data-placeholder').style.display = "none";
     updateStatsTab(placeVisitList, activitySegmentList)
+
+    showToast(Array.from(files).map(file => file.name).join("\r\n"))
 }
 
 // Handle custom range change
@@ -189,4 +191,12 @@ function handleTabClick(e) {
         document.getElementById('map').style.display = 'block';
         document.getElementById('stats').style.display = 'none';
     }
+}
+
+function showToast(files) {
+    const toastLiveExample = document.getElementById('liveToast')
+    const toastBody = document.getElementById("toast-body")
+    const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
+    toastBody.innerText = files
+    toastBootstrap.show()
 }

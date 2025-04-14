@@ -82,7 +82,7 @@ function handleActivitySegment(feature, year) {
             }
         });
 
-        switch (true) {
+        /*switch (true) {
             case feature.properties.travelMode.includes("WALK"):
                 feature.properties.travelMode = "🚶" + feature.properties.travelMode
                 break;
@@ -101,7 +101,7 @@ function handleActivitySegment(feature, year) {
             case feature.properties.travelMode.includes("SUBWAY"):
                 feature.properties.travelMode = "🚇" + feature.properties.travelMode
                 break;
-        }
+        }*/
 
         // Add an event listener for when the LineString is clicked
         map.on('click', `dynamic-line-${feature.properties.timestampStart}`, (e) => {
