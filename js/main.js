@@ -30,7 +30,6 @@ function initializeCalendar() {
 // Handle calendar date selection
 function handleCalendarChange(selectedDates, dateStr) {
     calendarSelectedDates = dateStr.split(",").map(date => date.trim());
-    console.log(selectedDates)
     updateMapAndAddActivityDetails(calendarSelectedDates);
     if (selectedDates.length === 0) {
         removeLines()
@@ -165,7 +164,6 @@ function handleCustomRangeChange() {
 function refresh(calendarSelectedDates) {
     let placeVisitDateList = getPlaceVisitDateListByConfidence();
     calendar.set('enable', placeVisitDateList);
-    console.log(calendarSelectedDates)
     if (calendarSelectedDates != undefined && calendarSelectedDates[0] === '') {
         calendar.jumpToDate(placeVisitDateList[placeVisitDateList.length - 1]);
     }    

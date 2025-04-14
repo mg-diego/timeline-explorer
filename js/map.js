@@ -196,4 +196,4 @@ function removeLineFromMap(timestamp) {
     if (map.getSource(`dynamic-line-${timestamp}`)) {
       map.removeSource(`dynamic-line-${timestamp}`);
     }
-  }
+}

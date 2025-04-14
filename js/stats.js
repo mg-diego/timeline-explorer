@@ -12,10 +12,17 @@ let locationTotalsPerCountry = new Map();
 let activityTotalsPerYear = new Map();
 
 function updateStatsTab(locationsMap, activitiesMap) {
-    locationTotalsPerYear = new Map([...locationTotalsPerYear, ...computeTotalLocationsPerYear(locationsMap)]);
+    const computedTotals = computeTotalLocationsPerYear(locationsMap);
+    console.log(computedTotals)
+
+    for (let [key, value] of computedTotals) {
+        if (!locationTotalsPerYear.has(key)) {
+            locationTotalsPerYear.set(key, value);
+        }
+    }
+
     activityTotalsPerYear = computeTotalActivitiesPerYear(activitiesMap);
     locationTotalsPerCountry = computeTotalLocationsPerCountry(locationsMap)
-    console.log(locationTotalsPerCountry)
 
     renderGlobalStatsCard(locationTotalsPerYear, activityTotalsPerYear);
     renderMarkersChart(locationTotalsPerYear);
@@ -129,35 +136,49 @@ function renderActivitiesChart(totals) {
 }
 
 function renderYearlyCards(locationsMap, activitiesMap) {
-    // PENDING
     const container = document.getElementById('statsCardGrid');
+
     locationsMap.forEach((markers, year) => {
         const activities = activitiesMap.get(year);
-        const html = `
-        <div class="col" style="margin-bottom:30px">
-            <div class="card">
-                <div class="card-header">
-                    <h5><strong>${year}</strong></h5>
+        if (document.getElementById(`card-${year}`) == null) {
+            const html = `
+            <div class="col" style="margin-bottom:30px">
+                <div id="card-${year}" class="card">
+                    <div class="card-header">
+                        <h5><strong>${year}</strong></h5>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>📌 Markers:</strong> ${markers}</li>
+                        <li class="list-group-item">
+                            <strong>✨ Activities:</strong><br><br>
+                            <table><tbody>
+                                <tr><td>🚶 Walk:</td><td>${formatChartDistanceValue(activities["WALKING"])} km</td></tr>
+                                <tr><td>🚇 Subway:</td><td>${formatChartDistanceValue(activities["IN_SUBWAY"])} km</td></tr>
+                                <tr><td>🚌 Bus:</td><td>${formatChartDistanceValue(activities["IN_BUS"])} km</td></tr>
+                                <tr><td>🚗 Car:</td><td>${formatChartDistanceValue(activities["IN_PASSENGER_VEHICLE"])} km</td></tr>
+                                <tr><td>🚅 Train:</td><td>${formatChartDistanceValue(activities["IN_TRAIN"])} km</td></tr>
+                                <tr><td>✈️ Flight:</td><td>${formatChartDistanceValue(activities["FLYING"])} km</td></tr>
+                            </tbody></table>
+                        </li>
+                    </ul>
                 </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>📌 Markers:</strong> ${markers}</li>
-                    <li class="list-group-item">
-                        <strong>✨ Activities:</strong><br><br>
-                        <table><tbody>
-                            <tr><td>🚶 Walk:</td><td>${formatChartDistanceValue(activities["WALKING"])} km</td></tr>
-                            <tr><td>🚇 Subway:</td><td>${formatChartDistanceValue(activities["IN_SUBWAY"])} km</td></tr>
-                            <tr><td>🚌 Bus:</td><td>${formatChartDistanceValue(activities["IN_BUS"])} km</td></tr>
-                            <tr><td>🚗 Car:</td><td>${formatChartDistanceValue(activities["IN_PASSENGER_VEHICLE"])} km</td></tr>
-                            <tr><td>🚅 Train:</td><td>${formatChartDistanceValue(activities["IN_TRAIN"])} km</td></tr>
-                            <tr><td>✈️ Flight:</td><td>${formatChartDistanceValue(activities["FLYING"])} km</td></tr>
-                        </tbody></table>
-                    </li>
-                </ul>
-            </div>
-        </div>`;
-
-        container.innerHTML += html;
+            </div>`;
+    
+            container.innerHTML += html;
+        } 
     })
+
+    const cards = Array.from(container.children);
+
+    // Sort based on the year in the id (e.g., "card-2025")
+    cards.sort((a, b) => {
+    const yearA = parseInt(a.querySelector('.card').id.replace('card-', ''));
+    const yearB = parseInt(b.querySelector('.card').id.replace('card-', ''));
+    return yearB - yearA; // descending
+    });
+
+    // Append sorted elements back into the container
+    cards.forEach(card => container.appendChild(card));
 }
 
 function resetChartStats() {
